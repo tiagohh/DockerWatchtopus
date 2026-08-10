@@ -1,0 +1,58 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "dw-dashboard",
+    "title": "DockerWatchtopus - Playback Metrics",
+    "tags": ["dockerwatchtopus"],
+    "timezone": "browser",
+    "schemaVersion": 29,
+    "version": 1,
+    "refresh": "10s",
+    "panels": [
+      {
+        "type": "stat",
+        "title": "Stall events (last 1h)",
+        "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+        "id": 1,
+        "targets": [
+          {
+            "query": "from(bucket:\"stream_metrics\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"playback\" and r.event == \"stall\" and r._field == \"stallDurationMs\") |> count()",
+            "refId": "A"
+          }
+        ],
+        "options": {}
+      },
+      {
+        "type": "timeseries",
+        "title": "Average stall duration (ms)",
+        "gridPos": { "x": 6, "y": 0, "w": 12, "h": 6 },
+        "id": 2,
+        "targets": [
+          {
+            "query": "from(bucket:\"stream_metrics\") |> range(start: -6h) |> filter(fn: (r) => r._measurement == \"playback\" and r._field == \"stallDurationMs\") |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "type": "table",
+        "title": "Top user agents by stall count (24h)",
+        "gridPos": { "x": 0, "y": 4, "w": 12, "h": 6 },
+        "id": 3,
+        "targets": [
+          {
+            "query": "from(bucket:\"stream_metrics\") |> range(start: -24h) |> filter(fn: (r) => r._measurement == \"playback\" and r.event == \"stall\") |> group(columns: [\"ua\"]) |> count() |> sort(columns:[\"_value\"], desc:true) |> limit(n:20)",
+            "refId": "A"
+          }
+        ]
+      }
+    ],
+    "templating": {
+      "list": []
+    },
+    "annotations": {
+      "list": []
+    }
+  },
+  "overwrite": false
+}
