@@ -1,0 +1,54 @@
+version: "3.8"
+services:
+  influxdb:
+    image: influxdb:2.7
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      - INFLUXDB_UI_AUTH_ENABLED=true
+      - INFLUXDB_INIT_MODE=setup
+      # Optional: uncomment and set to pre-create an org/bucket and avoid interactive setup
+      # - INFLUXDB_INIT_USERNAME=influxuser
+      # - INFLUXDB_INIT_PASSWORD=influxpass
+      # - INFLUXDB_INIT_ORG=example-org
+      # - INFLUXDB_INIT_BUCKET=stream_metrics
+      # - INFLUXDB_INIT_ADMIN_TOKEN=changeme-token
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+
+  grafana:
+    image: grafana/grafana:9.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - influxdb
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+  api:
+    build: ./api
+    container_name: metrics-api
+    ports:
+      - "4000:4000"
+    depends_on:
+      - influxdb
+    environment:
+      - INFLUX_URL=http://influxdb:8086
+      - INFLUX_TOKEN=changeme-token
+      - INFLUX_ORG=example-org
+      - INFLUX_BUCKET=stream_metrics
+    volumes:
+      - ./api:/usr/src/app
+
+  static:
+    image: nginx:stable
+    container_name: static
+    ports:
+      - "8080:80"
+    volumes:
+      - ./static:/usr/share/nginx/html:ro
+
+volumes:
+  influxdb-data: {}
